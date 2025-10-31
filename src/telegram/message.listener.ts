@@ -128,7 +128,6 @@ export const listener = async (interaction: Interaction) => {
   const text = await getText(interaction);
   const data = await resolveManygetAttacments(interaction, text === ADDITIONAL_TEXT_STR ? undefined : text);
 
-  console.log(data);
   if (data.skip) {
     return;
   }
