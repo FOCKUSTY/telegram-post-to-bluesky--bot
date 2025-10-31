@@ -1,2 +1,2 @@
-# telegram-post-to-bluesky--bot
+# TPtBB
 Бот, который будет публиковать посты из Telegram канала в Bluesky аккаунт
