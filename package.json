@@ -1,0 +1,29 @@
+{
+  "name": "telegram-post-to-bluesky--bot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.13.1",
+  "devDependencies": {
+    "@eslint/js": "^9.38.0",
+    "@types/node": "^24.9.2",
+    "@typescript-eslint/eslint-plugin": "^8.46.2",
+    "@typescript-eslint/parser": "^8.46.2",
+    "acorn": "latest",
+    "dotenv": "^17.2.3",
+    "eslint": "^9.38.0",
+    "globals": "^16.4.0",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.46.2"
+  },
+  "dependencies": {
+    "@atproto/api": "^0.17.7",
+    "telegraf": "^4.16.3"
+  }
+}
