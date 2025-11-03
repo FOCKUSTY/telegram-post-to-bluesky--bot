@@ -1,23 +1,9 @@
 import { Telegraf } from "telegraf";
-
 import { messageListener } from "./listeners.bot";
 
-const enum EnvKeys {
-  token = "TELEGRAM_BOT_TOKEN"
-}
+import env from "@env";
 
-const env = process.env as Record<EnvKeys, string>;
-
-const REQUIRED_ENV_KEYS = [
-  EnvKeys.token,
-];
-
-const isAllKeysInEnv = REQUIRED_ENV_KEYS.every(key => env[key]);
-if (!isAllKeysInEnv) {
-  throw new Error("Bad env");
-};
-
-export const client = new Telegraf(env[EnvKeys.token]);
+export const client = new Telegraf(env.TELEGRAM_BOT_TOKEN);
 
 client.on("channel_post", async (interaction) => {
   messageListener(interaction);

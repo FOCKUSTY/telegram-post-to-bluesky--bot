@@ -1,30 +1,15 @@
 import { AtpAgent } from '@atproto/api'
 
+import env from "@env";
+
 export const agent = new AtpAgent({
   service: "https://bsky.social"
 });
 
-const enum EnvKeys {
-  identifier = "BLUESKY_USERNAME",
-  password = "BLUESKY_PASSWORD"
-};
-
-const env = process.env as Record<EnvKeys, string>;
-
-const REQUIRED_ENV_KEYS = [
-  EnvKeys.identifier,
-  EnvKeys.password,
-];
-
-const isAllKeysInEnv = REQUIRED_ENV_KEYS.every(key => env[key]);
-if (!isAllKeysInEnv) {
-  throw new Error("Bad env");
-};
-
 export const login = async () => {
   const data = await agent.login({
-    identifier: env[EnvKeys.identifier],
-    password: env[EnvKeys.password],
+    identifier: env.BLUESKY_USERNAME,
+    password: env.BLUESKY_PASSWORD,
   });
 
   console.log((data.success
