@@ -13,7 +13,8 @@
     "skipLibCheck": true,
     "baseUrl": "./",
     "paths": {
-      "@env": ["./src/env.ts"]
+      "@env": ["./src/env.ts"],
+      "@database": ["./src/prisma/index.ts"],
     }
   },
   "include": [

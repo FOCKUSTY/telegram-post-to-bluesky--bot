@@ -7,7 +7,6 @@ const REQUIRED_ENV_KEYS = [
 ] as const;
 
 type ArrayElement<T extends unknown[] | readonly unknown[]> = T[number];
-type RequiredEnvKeys = ArrayElement<typeof REQUIRED_ENV_KEYS>;
 
 const ALL = [
   ...REQUIRED_ENV_KEYS,
