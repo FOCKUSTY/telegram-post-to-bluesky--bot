@@ -14,15 +14,11 @@
     "baseUrl": "./",
     "paths": {
       "@env": ["./src/env.ts"],
-      "@database": ["./src/prisma/index.ts"],
+      "@database": ["./src/prisma/index.ts"]
     }
   },
-  "include": [
-    "./**/*.ts",
-  ],
-  "exclude": [
-    "node_modules",
-  ],
+  "include": ["./**/*.ts"],
+  "exclude": ["node_modules"],
   "ts-node": {
     "require": ["tsconfig-paths/register"]
   }

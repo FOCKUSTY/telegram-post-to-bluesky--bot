@@ -25,26 +25,23 @@ telegramUrl является необязательным, и в качеств�
 
 export const connectCommand = (interaction: Interaction) => {
   if (interaction.message.chat.type !== "private") {
-    return interaction.reply("Эта команда доступна только в личных сообщениях.");
+    return interaction.reply(
+      "Эта команда доступна только в личных сообщениях."
+    );
   }
 
   const text = interaction.text;
 
   if (!text) {
     return interaction.reply(TEXT);
-  };
+  }
 
-  const [
-    _,
-    telegramId,
-    telegramUrl,
-    blueskyUsername,
-    blueskyPassword
-  ] = text.split(" ");
+  const [_, telegramId, telegramUrl, blueskyUsername, blueskyPassword] =
+    text.split(" ");
 
   if (!telegramId || !telegramUrl || !blueskyUsername || !blueskyPassword) {
     return interaction.reply(TEXT);
-  };
+  }
 
   return interaction.reply("Подклчючение к Bluesky в разработке.");
 };

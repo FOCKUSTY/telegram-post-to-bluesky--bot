@@ -1,5 +1,10 @@
 import { Telegraf } from "telegraf";
-import { channelPostListener, commandsListener, messageListener, groupMessageListener } from "./listeners";
+import {
+  channelPostListener,
+  commandsListener,
+  messageListener,
+  groupMessageListener
+} from "./listeners";
 
 import env from "@env";
 
@@ -17,6 +22,6 @@ client.on("channel_post", async (interaction) => {
 
 export const login = async () => {
   await client.launch();
-}
+};
 
 export default client;
