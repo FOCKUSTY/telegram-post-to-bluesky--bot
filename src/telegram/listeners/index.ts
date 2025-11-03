@@ -1,0 +1,1 @@
+export { channelPostListener } from "./сhannel-post.listener";

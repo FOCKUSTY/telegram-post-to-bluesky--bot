@@ -1,4 +1,4 @@
-import type { Image } from "../telegram/message.listener";
+import type { Image } from "../telegram/listeners/сhannel-post.listener";
 import type { Main } from "@atproto/api/dist/client/types/app/bsky/embed/images";
 
 import { RichText } from '@atproto/api'

@@ -1,26 +1,11 @@
-import type { Interaction } from "./interaction.type";
+import type { Interaction } from "../interaction.type";
 
-import BlueskyApi from "../bluesky";
+import env from "@env";
 
-const enum EnvKeys {
-  id = "TELEGRAM_CHANNEL_ID",
-  url = "TELEGRAM_CHANNEL_URL"
-}
-
-const env = process.env as Record<EnvKeys, string>;
-
-const REQUIRED_ENV_KEYS = [
-  EnvKeys.id,
-  EnvKeys.url
-];
-
-const isAllKeysInEnv = REQUIRED_ENV_KEYS.every(key => env[key]);
-if (!isAllKeysInEnv) {
-  throw new Error("Bad env");
-};
+import BlueskyApi from "../../bluesky";
 
 const POINTS = "...";
-const ADDITIONAL_TEXT_STR ="Из Telegram: " + env[EnvKeys.url]
+const ADDITIONAL_TEXT_STR ="Из Telegram: " + env.TELEGRAM_CHANNEL_URL
 const ADDITIONAL_TEXT = "\n\n" + ADDITIONAL_TEXT_STR;
 const MAX_LENGTH = 300;
 const MAX_TEXT_LENGTH = 300 - ADDITIONAL_TEXT.length;
@@ -35,7 +20,7 @@ export type Image = {
 export const getText = async (interaction: Interaction) => {
   const chat = interaction.update.channel_post.chat;
 
-  if (chat.id.toString() !== env[EnvKeys.id]) {
+  if (chat.id.toString() !== env.TELEGRAM_CHANNEL_ID) {
     return;
   }
 
@@ -58,7 +43,7 @@ export const getText = async (interaction: Interaction) => {
 export const getAttacment = async (interaction: Interaction): Promise<Image|null> => {
   const chat = interaction.update.channel_post.chat;
 
-  if (chat.id.toString() !== env[EnvKeys.id]) {
+  if (chat.id.toString() !== env.TELEGRAM_CHANNEL_ID) {
     return null;
   }
 
@@ -124,7 +109,7 @@ export const resolveManygetAttacments = (interaction: Interaction, text?: string
   })
 }
 
-export const listener = async (interaction: Interaction) => {
+export const channelPostListener = async (interaction: Interaction) => {
   const text = await getText(interaction);
   const data = await resolveManygetAttacments(interaction, text === ADDITIONAL_TEXT_STR ? undefined : text);
 
@@ -142,4 +127,4 @@ export const listener = async (interaction: Interaction) => {
   });
 }
 
-export default listener;
+export default channelPostListener;
