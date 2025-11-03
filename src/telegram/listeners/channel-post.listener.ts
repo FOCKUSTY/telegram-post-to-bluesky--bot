@@ -1,5 +1,6 @@
 import type { Interaction } from "../interaction.type";
 
+import prisma from "@database";
 import env from "@env";
 
 import BlueskyApi from "../../bluesky";
@@ -109,7 +110,23 @@ export const resolveManygetAttacments = (interaction: Interaction, text?: string
   })
 }
 
+export const getPrismaChannel = async (interaction: Interaction) => {
+  const chat = interaction.update.channel_post.chat;
+
+  return prisma.channel.findUnique({
+    where: {
+      id: `${chat.id}`
+    }
+  });
+};
+
 export const channelPostListener = async (interaction: Interaction) => {
+  const prismaChannel = await getPrismaChannel(interaction);
+
+  if (!prismaChannel) {
+    return;
+  }
+
   const text = await getText(interaction);
   const data = await resolveManygetAttacments(interaction, text === ADDITIONAL_TEXT_STR ? undefined : text);
 
@@ -121,10 +138,10 @@ export const channelPostListener = async (interaction: Interaction) => {
     return;
   };
 
-  new BlueskyApi().post({
-    text: data.text,
-    images: data.attachments
-  });
+  // new BlueskyApi().post({
+    // text: data.text,
+    // images: data.attachments
+  // });
 }
 
 export default channelPostListener;

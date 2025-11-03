@@ -8,12 +8,20 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id              Int     @id @default(autoincrement())
-  channelId       String  @unique
-  channelUrl      String? @unique
-  blueskyId       String  @unique
+model Channel {
+  id              String   @id
+  url             String?  @unique
+  blueskyId       String   @unique
   blueskyPassword String
-  commentsEnabled Boolean @default(true)
-  enabled         Boolean @default(true)
+  commentsEnabled Boolean  @default(true)
+  enabled         Boolean  @default(true)
+  threads         Thread[]
+}
+
+model Thread {
+  id         Int      @id @default(autoincrement())
+  telegramId String   @unique
+  createdAt  DateTime @default(now())
+  channel    Channel? @relation(fields: [channelId], references: [id])
+  channelId  String?
 }
