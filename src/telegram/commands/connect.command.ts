@@ -1,6 +1,6 @@
 import prisma from "@database";
 import { Interaction } from "../interaction.type";
-import { loginByUsername } from "src/bluesky";
+import { login } from "src/bluesky";
 
 const TEXT = `
 Команда /connect позволяет связать ваш аккаунт Telegram с аккаунтом Bluesky.
@@ -56,7 +56,7 @@ export const connectCommand = async (interaction: Interaction) => {
     return interaction.reply("Этот канал уже подключен.");
   }
 
-  const { data, agent } = await loginByUsername(blueskyUsername, blueskyPassword);
+  const { data, agent } = await login(blueskyUsername, blueskyPassword);
 
   if (!data.success) {
     return interaction.reply("Не удалось войти в Bluesky. Проверьте правильность имени пользователя и пароля.");

@@ -6,10 +6,7 @@ import env from "@env";
 import BlueskyApi from "../../bluesky";
 
 const POINTS = "...";
-const ADDITIONAL_TEXT_STR = "Из Telegram: " + env.TELEGRAM_CHANNEL_URL;
-const ADDITIONAL_TEXT = "\n\n" + ADDITIONAL_TEXT_STR;
 const MAX_LENGTH = 300;
-const MAX_TEXT_LENGTH = 300 - ADDITIONAL_TEXT.length;
 
 export type Image = {
   dataUri: string;
@@ -18,20 +15,26 @@ export type Image = {
   height: string;
 };
 
-export const getText = async (interaction: Interaction) => {
-  const chat = interaction.update.channel_post.chat;
+type Channel = {
+  id: string;
+  userId: string;
+  url: string | null;
+  blueskyId: string;
+  blueskyPassword: string;
+  commentsEnabled: boolean;
+  enabled: boolean;
+  verified: boolean;
+};
 
-  if (chat.id.toString() !== env.TELEGRAM_CHANNEL_ID) {
-    return;
-  }
+const generateText = (text: string, channel: Channel) => {
+  const additional = channel.url
+    ? "Из Telegram: " + channel.url
+    : "Из Telegram";
 
-  const text =
-    interaction.update.channel_post.text ||
-    interaction.update.channel_post.caption;
-
-  if (!text) {
-    return ADDITIONAL_TEXT_STR;
-  }
+  const ADDITIONAL_TEXT = text === ""
+    ? additional
+    : "\n\n" + additional;
+  const MAX_TEXT_LENGTH = 300 - ADDITIONAL_TEXT.length;
 
   let output: string = text + ADDITIONAL_TEXT;
 
@@ -44,12 +47,28 @@ export const getText = async (interaction: Interaction) => {
   return output;
 };
 
+export const getText = async (interaction: Interaction, channel: Channel, message?: string) => {
+  const chat = interaction.update.channel_post.chat;
+
+  if (chat.id.toString() !== channel.id) {
+    return;
+  }
+
+  const text =
+    message ||
+    interaction.update.channel_post.text ||
+    interaction.update.channel_post.caption;
+
+  return generateText(text || "", channel);
+};
+
 export const getAttacment = async (
-  interaction: Interaction
+  interaction: Interaction,
+  channel: Channel
 ): Promise<Image | null> => {
   const chat = interaction.update.channel_post.chat;
 
-  if (chat.id.toString() !== env.TELEGRAM_CHANNEL_ID) {
+  if (chat.id.toString() !== channel.id) {
     return null;
   }
 
@@ -80,7 +99,7 @@ export const getAttacment = async (
 };
 
 const attachments = new Map<
-  number,
+  string,
   {
     timeout: NodeJS.Timeout;
     resolve: () => unknown;
@@ -90,27 +109,31 @@ const attachments = new Map<
 >();
 export const resolveManygetAttacments = (
   interaction: Interaction,
-  text?: string
+  channel: Channel,
+  text?: string,
 ) => {
   return new Promise<{
     attachments: Image[];
-    text?: string;
+    text: string;
     skip?: boolean;
     end?: boolean;
   }>((resolve) => {
     (async () => {
-      const attachment = await getAttacment(interaction);
-      const id = interaction.update.channel_post.media_group_id;
-
+      const attachment = await getAttacment(interaction, channel);
+      const groupId = interaction.update.channel_post.media_group_id;
+      const chatId = interaction.update.channel_post.chat.id;
+      
       if (!attachment) {
-        return resolve({ attachments: [], text, end: true });
+        return resolve({ attachments: [], text: "", end: true });
+      }
+      
+      if (!groupId) {
+        return resolve({ attachments: [attachment], text: "", end: true });
       }
 
-      if (!id) {
-        return resolve({ attachments: [attachment], text, end: true });
-      }
-
+      const id = `${chatId}-${groupId}`;
       const data = attachments.get(id);
+      
       clearTimeout(data?.timeout);
       data?.resolve();
 
@@ -119,20 +142,20 @@ export const resolveManygetAttacments = (
         resolve({
           attachments: images,
           end: true,
-          text: data?.text,
+          text: data?.text || "",
           skip: false
         });
       }, 5000);
 
       attachments.set(id, {
-        text: data?.text || text || ADDITIONAL_TEXT_STR,
+        text: data?.text || text || "",
         images,
         timeout,
         resolve: () => {
           resolve({
             attachments: images,
             skip: true,
-            text: data?.text,
+            text: data?.text || "",
             end: false
           });
         }
@@ -146,16 +169,7 @@ export const verifyAndUpdateOrDeleteChannel = async ({
   channel
 }: {
   interaction: Interaction,
-  channel: {
-    id: string;
-    userId: string;
-    url: string | null;
-    blueskyId: string;
-    blueskyPassword: string;
-    commentsEnabled: boolean;
-    enabled: boolean;
-    verified: boolean;
-  }
+  channel: Channel
 }) => {
   const chat = interaction.update.channel_post.chat;
   const administrators = await interaction.getChatAdministrators();
@@ -227,30 +241,38 @@ export const getPrismaChannel = async (interaction: Interaction) => {
 
 export const channelPostListener = async (interaction: Interaction) => {
   const prismaChannel = await getPrismaChannel(interaction);
-
   if (!prismaChannel) {
     return;
   }
 
-  const text = await getText(interaction);
   const data = await resolveManygetAttacments(
     interaction,
-    text === ADDITIONAL_TEXT_STR ? undefined : text
+    prismaChannel,
+    interaction.update.channel_post.text || interaction.update.channel_post.caption
   );
 
   if (data.skip) {
     return;
   }
 
-  if (!data.end || !data.text) {
+  if (!data.end) {
+    return;
+  }
+  
+  const message = await getText(interaction, prismaChannel, data.text);
+  if (!message) {
     return;
   }
 
   const api = await BlueskyApi.createInstance(prismaChannel.blueskyId, prismaChannel.blueskyPassword);
-  // api.post({
-    // images: data.attachments,
-    // text: data.text,
-  // });
+  if (!api) {
+    return;
+  }
+
+  return api.post({
+    images: data.attachments,
+    text: message,
+  });
 };
 
 export default channelPostListener;

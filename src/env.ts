@@ -1,9 +1,5 @@
 const REQUIRED_ENV_KEYS = [
   "TELEGRAM_BOT_TOKEN",
-  "BLUESKY_USERNAME",
-  "BLUESKY_PASSWORD",
-  "TELEGRAM_CHANNEL_ID",
-  "TELEGRAM_CHANNEL_URL"
 ] as const;
 
 type ArrayElement<T extends unknown[] | readonly unknown[]> = T[number];

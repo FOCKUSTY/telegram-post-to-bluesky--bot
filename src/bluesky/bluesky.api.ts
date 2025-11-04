@@ -2,7 +2,7 @@ import type { Image } from "../telegram/listeners/channel-post.listener";
 import type { Main } from "@atproto/api/dist/client/types/app/bsky/embed/images";
 
 import { RichText, AtpAgent } from "@atproto/api";
-import agent, { loginByUsername } from "./bluesky.agent";
+import { login } from "./bluesky.agent";
 
 function convertDataURIToUint8Array(dataURI: string): Uint8Array {
   const base64 = dataURI.split(",")[1];
@@ -14,7 +14,7 @@ function convertDataURIToUint8Array(dataURI: string): Uint8Array {
   return array;
 }
 
-async function getImages(attachments?: Image[]): Promise<Main["images"]> {
+async function getImages(agent: AtpAgent, attachments?: Image[]): Promise<Main["images"]> {
   if (!attachments) {
     return [];
   }
@@ -29,7 +29,7 @@ async function getImages(attachments?: Image[]): Promise<Main["images"]> {
       }
     );
     output.push({
-      alt: attachment.alt,
+      alt: "Image from Telegram",
       image: data.blob
     });
   }
@@ -40,11 +40,18 @@ async function getImages(attachments?: Image[]): Promise<Main["images"]> {
 export class Bluesky {
   public readonly maxTextLength: number = 300;
 
-  public static login = loginByUsername;
-  public static createInstance = (username: string, password: string) =>
-    loginByUsername(username, password).then(() => new Bluesky());
+  public static login = login;
+  public static createInstance = async (username: string, password: string) => {
+    const { data, agent } = await login(username, password);
 
-  public constructor(public readonly agent: AtpAgent = agent) {}
+    if (!data) {
+      return null;
+    } 
+
+    return new Bluesky(agent);
+  }
+
+  public constructor(public readonly agent: AtpAgent = new AtpAgent({ service: "https://bsky.social" })) {}
 
   public async post({
     text,
@@ -62,7 +69,7 @@ export class Bluesky {
       facets: richText.facets,
       embed: {
         $type: "app.bsky.embed.images",
-        images: await getImages(images)
+        images: await getImages(this.agent, images)
       },
       createdAt: new Date().toISOString()
     });
