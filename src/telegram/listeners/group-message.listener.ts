@@ -25,7 +25,8 @@ export const groupMessageListener = async (interaction: Interaction) => {
   }
 
   const message = interaction.update.message;
-  const channelId = reply.forward_from_chat.id;
+  const channelId = `${reply?.forward_from_chat?.id}`;
+  const threadId = `${reply.chat.id}-${message.message_thread_id}`;
 
   if (reply?.forward_origin?.type === "channel") {
     const prismaChannel = await prisma.channel.findUnique({
@@ -44,18 +45,30 @@ export const groupMessageListener = async (interaction: Interaction) => {
       return;
     }
 
-    prisma.thread.create({
-      data: {
-        telegramId: message.message_thread_id,
-        channelId: channelId
-      }
+    let thread = await prisma.thread.findUnique({
+      where: { id: threadId }
     });
+
+    if (!thread) {
+      thread = await prisma.thread.create({
+        data: {
+          id: threadId,
+          channelId: channelId
+        }
+      });
+    }
   }
 
-  console.log("---- [GROUP MESSAGE LISTENER] ----");
-  console.dir(reply, { depth: Infinity });
-  console.log("---- [GROUP MESSAGE LISTENER] ----");
+  const thread = await prisma.thread.findUnique({
+    where: { id: threadId }
+  });
 
+  if (!thread) {
+    return;
+  }
+
+  console.log(reply.text);
+  
   return;
 };
 

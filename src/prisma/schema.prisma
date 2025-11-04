@@ -21,9 +21,8 @@ model Channel {
 }
 
 model Thread {
-  id         Int      @id @default(autoincrement())
-  telegramId String   @unique
+  id String   @id
   createdAt  DateTime @default(now())
-  channelId  String?
-  channel    Channel? @relation(fields: [channelId], references: [id])
+  channelId  String
+  channel    Channel  @relation(fields: [channelId], references: [id])
 }

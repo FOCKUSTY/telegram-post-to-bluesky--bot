@@ -14,16 +14,12 @@ CREATE TABLE "Channel" (
 
 -- CreateTable
 CREATE TABLE "Thread" (
-    "id" SERIAL NOT NULL,
-    "telegramId" TEXT NOT NULL,
+    "id" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "channelId" TEXT,
+    "channelId" TEXT NOT NULL,
 
     CONSTRAINT "Thread_pkey" PRIMARY KEY ("id")
 );
 
--- CreateIndex
-CREATE UNIQUE INDEX "Thread_telegramId_key" ON "Thread"("telegramId");
-
 -- AddForeignKey
-ALTER TABLE "Thread" ADD CONSTRAINT "Thread_channelId_fkey" FOREIGN KEY ("channelId") REFERENCES "Channel"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "Thread" ADD CONSTRAINT "Thread_channelId_fkey" FOREIGN KEY ("channelId") REFERENCES "Channel"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
