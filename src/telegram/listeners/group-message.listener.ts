@@ -4,6 +4,7 @@ import { Interaction } from "../interaction.type";
 import prisma from "@database";
 import { sliceText } from "./channel-post.listener";
 import BlueskyApi from "src/bluesky";
+import env from "@env";
 
 export const AVAILABLE_INTERACTIONS: UpdateType[] = ["message"];
 
@@ -43,7 +44,8 @@ const findThenCreateOrUpdateThread = async (id: string) => {
       if (!thread) {
         return prisma.thread.create({
           data: {
-            id, uri, cid, channelId
+            id, uri, cid, channelId,
+            expiresAt: new Date(Date.now() + +env.TIME_TO_LIVE),
           }
         })
       }

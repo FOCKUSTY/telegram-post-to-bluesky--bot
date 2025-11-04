@@ -27,6 +27,7 @@ model Thread {
   channelId String
   channel   Channel  @relation(fields: [channelId], references: [id])
   createdAt DateTime @default(now())
+  expiresAt DateTime
 }
 
 model Message {

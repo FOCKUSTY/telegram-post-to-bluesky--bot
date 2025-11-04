@@ -1,5 +1,6 @@
 const REQUIRED_ENV_KEYS = [
   "TELEGRAM_BOT_TOKEN",
+  "TIME_TO_LIVE"
 ] as const;
 
 type ArrayElement<T extends unknown[] | readonly unknown[]> = T[number];
