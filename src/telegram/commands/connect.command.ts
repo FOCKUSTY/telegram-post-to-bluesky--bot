@@ -1,6 +1,6 @@
 import prisma from "@database";
 import { Interaction } from "../interaction.type";
-import { login } from "src/bluesky";
+import { login } from "../../bluesky";
 
 const TEXT = `
 Команда /connect позволяет связать ваш аккаунт Telegram с аккаунтом Bluesky.

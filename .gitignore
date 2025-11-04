@@ -140,3 +140,6 @@ vite.config.ts.timestamp-*
 
 # primsa
 generated/
+
+# output
+telegram-post-to-bluesky--bot.zip

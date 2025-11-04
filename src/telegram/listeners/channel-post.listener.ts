@@ -1,7 +1,6 @@
 import type { Interaction } from "../interaction.type";
 
 import prisma from "@database";
-import env from "@env";
 
 import BlueskyApi from "../../bluesky";
 

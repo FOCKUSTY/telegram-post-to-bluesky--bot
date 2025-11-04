@@ -3,7 +3,7 @@ import { Interaction } from "../interaction.type";
 
 import prisma from "@database";
 import { sliceText } from "./channel-post.listener";
-import BlueskyApi from "src/bluesky";
+import BlueskyApi from "../../bluesky";
 import env from "@env";
 
 export const AVAILABLE_INTERACTIONS: UpdateType[] = ["message"];
