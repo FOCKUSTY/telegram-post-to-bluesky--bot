@@ -2,11 +2,109 @@ import { UpdateType } from "telegraf/typings/telegram-types";
 import { Interaction } from "../interaction.type";
 
 import prisma from "@database";
+import { sliceText } from "./channel-post.listener";
+import BlueskyApi from "src/bluesky";
 
 export const AVAILABLE_INTERACTIONS: UpdateType[] = ["message"];
 
+const createBlueskyInstance = async (channel: {
+  blueskyId: string
+  blueskyPassword: string
+}) => BlueskyApi.createInstance(channel.blueskyId, channel.blueskyPassword)
+
+const findChannelAndCreateBlueskyInstance = async (id: string) => {
+  const prismaChannel = await prisma.channel.findUnique({
+    where: { id: id }
+  });
+
+  if (!prismaChannel) {
+    return null;
+  }
+
+  return createBlueskyInstance(prismaChannel);
+}
+
+const findThenCreateOrUpdateThread = async (id: string) => {
+  const thread = await prisma.thread.findUnique({
+    where: { id }
+  });
+
+  return {
+    thread,
+    createOrUpdateThread: ({
+      channelId,
+      cid,
+      uri
+    }: {
+      uri: string,
+      cid: string,
+      channelId: string
+    }) => {
+      if (!thread) {
+        return prisma.thread.create({
+          data: {
+            id, uri, cid, channelId
+          }
+        })
+      }
+
+      return prisma.thread.update({
+        where: { id },
+        data: { uri, cid, channelId }
+      })
+    }
+  }
+};
+
+const comment = async ({
+  channelId,
+  threadId,
+  message
+}: {
+  threadId: string,
+  channelId?: string,
+  message: {
+    uri?: string,
+    cid?: string,
+    text: string
+  }
+}) => {
+  const { thread, createOrUpdateThread } = await findThenCreateOrUpdateThread(threadId);
+
+  const id = channelId || thread?.channelId;
+  if (!id) {
+    return;
+  }
+
+  const bluesky = await findChannelAndCreateBlueskyInstance(id);
+  if (!bluesky) {
+    return;
+  }
+
+  const uri = message?.uri || thread?.uri;
+  const cid = message?.cid || thread?.cid;
+  if (!uri || !cid) {
+    return;
+  }
+
+  await createOrUpdateThread({
+    uri, cid, channelId: id
+  });
+
+  return bluesky.comment(
+    uri,
+    cid,
+    message.text
+  );
+}
+
 export const groupMessageListener = async (interaction: Interaction) => {
-  if (interaction.text?.startsWith("/")) {
+  const text = interaction.text;
+  if (!text) {
+    return;
+  }
+
+  if (text.startsWith("/")) {
     return;
   }
 
@@ -27,56 +125,55 @@ export const groupMessageListener = async (interaction: Interaction) => {
   const message = interaction.update.message;
   const channelId = `${reply?.forward_from_chat?.id}`;
   const threadId = `${reply.chat.id}-${message.message_thread_id}`;
-  const messageId = `${reply.chat.id}-${reply.message_id}`;
+  const messageId = `${channelId}-${reply.forward_from_message_id}`;
+  const channelIdAvailable = reply?.forward_origin?.type === "channel";
 
-  let prismaMessage = await prisma.message.findUnique({
+  const prismaMessage = await prisma.message.findUnique({
     where: { id: messageId }
   });
 
-  if (!prismaMessage) {
-    prismaMessage = await prisma.message.create({
-      data: {
-        id: messageId,
-        threadId: threadId,
-      }
+  if (prismaMessage) {
+    return comment({
+      message: {
+        text: sliceText(text),
+        ...prismaMessage,
+      },
+      threadId: threadId,
+      channelId: channelIdAvailable
+        ? channelId
+        : undefined
     });
-  }
+  };
 
-  if (reply?.forward_origin?.type === "channel") {
-    const prismaChannel = await prisma.channel.findUnique({
-      where: { id: channelId }
-    });
-
-    if (!prismaChannel) {
-      return;
-    }
-
-    if (!prismaChannel.commentsEnabled) {
-      return;
-    }
-
-    if (!prismaChannel.enabled) {
-      return;
-    }
-
-    const thread = await prisma.thread.findUnique({
-      where: { threadId }
-    });
-
-    if (!thread) {
-      return;
-    }
-  }
-
-  const thread = await prisma.thread.findUnique({
-    where: { threadId }
-  });
-
+  const { thread } = await findThenCreateOrUpdateThread(threadId);
   if (!thread) {
     return;
   }
-  
-  return;
+
+  const prismaChannel = await prisma.channel.findUnique({
+    where: { id: channelIdAvailable ? channelId : thread.channelId }
+  });
+
+  if (!prismaChannel) {
+    return;
+  }
+  if (!prismaChannel.commentsEnabled) {
+    return;
+  }
+  if (!prismaChannel.enabled) {
+    return;
+  }
+
+  const bluesky = await createBlueskyInstance(prismaChannel);
+  if (!bluesky) {
+    return;
+  }
+
+  await bluesky.comment(
+    thread.uri,
+    thread.cid,
+    sliceText(text)
+  );
 };
 
 export default groupMessageListener;

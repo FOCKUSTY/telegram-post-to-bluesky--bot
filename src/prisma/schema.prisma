@@ -21,13 +21,12 @@ model Channel {
 }
 
 model Thread {
-  id        String    @id
-  uri String
-  cid String
-  threadId  String?   @unique
+  id        String   @id
+  uri       String
+  cid       String
   channelId String
-  channel   Channel   @relation(fields: [channelId], references: [id])
-  createdAt DateTime  @default(now())
+  channel   Channel  @relation(fields: [channelId], references: [id])
+  createdAt DateTime @default(now())
 }
 
 model Message {

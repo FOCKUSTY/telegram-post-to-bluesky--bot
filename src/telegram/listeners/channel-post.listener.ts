@@ -26,6 +26,20 @@ type Channel = {
   verified: boolean;
 };
 
+export const sliceText = (text: string, additional: string = "") => {
+  const MAX_TEXT_LENGTH = 300 - additional.length;
+
+  let output: string = text + additional;
+  
+  const length = text.length + additional.length;
+  if (length > MAX_LENGTH) {
+    output =
+      text.slice(0, MAX_TEXT_LENGTH - POINTS.length) + POINTS + additional;
+  }
+
+  return output;
+}
+
 const generateText = (text: string, channel: Channel) => {
   const additional = channel.url
     ? "Из Telegram: " + channel.url
@@ -34,17 +48,8 @@ const generateText = (text: string, channel: Channel) => {
   const ADDITIONAL_TEXT = text === ""
     ? additional
     : "\n\n" + additional;
-  const MAX_TEXT_LENGTH = 300 - ADDITIONAL_TEXT.length;
 
-  let output: string = text + ADDITIONAL_TEXT;
-
-  const length = text.length + ADDITIONAL_TEXT.length;
-  if (length > MAX_LENGTH) {
-    output =
-      text.slice(0, MAX_TEXT_LENGTH - POINTS.length) + POINTS + ADDITIONAL_TEXT;
-  }
-
-  return output;
+  return sliceText(text, ADDITIONAL_TEXT);
 };
 
 export const getText = async (interaction: Interaction, channel: Channel, message?: string) => {
@@ -108,7 +113,7 @@ const attachments = new Map<
     ids: string[];
   }
 >();
-export const resolveManygetAttacments = (
+export const resolveManyAttacments = (
   interaction: Interaction,
   channel: Channel,
   text?: string,
@@ -116,7 +121,6 @@ export const resolveManygetAttacments = (
   return new Promise<{
     attachments: Image[];
     text: string;
-    skip?: boolean;
     end?: boolean;
     ids: string[];
   }>((resolve) => {
@@ -146,7 +150,6 @@ export const resolveManygetAttacments = (
           attachments: images,
           end: true,
           text: data?.text || "",
-          skip: false,
           ids: ids
         });
       }, 5000);
@@ -159,7 +162,6 @@ export const resolveManygetAttacments = (
         resolve: () => {
           resolve({
             attachments: images,
-            skip: true,
             text: data?.text || "",
             end: false,
             ids: ids
@@ -251,15 +253,11 @@ export const channelPostListener = async (interaction: Interaction) => {
     return;
   }
 
-  const data = await resolveManygetAttacments(
+  const data = await resolveManyAttacments(
     interaction,
     prismaChannel,
     interaction.update.channel_post.text || interaction.update.channel_post.caption
   );
-
-  if (data.skip) {
-    return;
-  }
 
   if (!data.end) {
     return;
@@ -275,18 +273,19 @@ export const channelPostListener = async (interaction: Interaction) => {
     return;
   }
 
-  // const postData = await api.post({
-    // images: data.attachments,
-    // text: message,
-  // });
-// 
-  // prisma.thread.create({
-    // data: {
-      // id: id,
-      // channelId: prismaChannel.id,
-      // postUrl: postData.uri,
-    // }
-  // });
+  const chatId = `${interaction.channelPost.chat.id}`;
+  const postData = await api.post({
+    images: data.attachments,
+    text: message,
+  });
+
+  await prisma.message.createMany({
+    data: data.ids.map(id => ({
+      id: `${chatId}-${id}`,
+      uri: postData.uri,
+      cid: postData.cid
+    }))
+  });
 };
 
 export default channelPostListener;
