@@ -129,6 +129,10 @@ export const groupMessageListener = async (interaction: Interaction) => {
   const threadId = `${reply.chat.id}-${message.message_thread_id}`;
   const messageId = `${channelId}-${reply.forward_from_message_id}`;
   const channelIdAvailable = reply?.forward_origin?.type === "channel";
+  const name = interaction.message.from.first_name === "Telegram"
+    ? ""
+    : `(${interaction.message.from.username || interaction.message.from.first_name}) `;
+  const slicedText = sliceText(name + text);
 
   const prismaMessage = await prisma.message.findUnique({
     where: { id: messageId }
@@ -137,7 +141,7 @@ export const groupMessageListener = async (interaction: Interaction) => {
   if (prismaMessage) {
     return comment({
       message: {
-        text: sliceText(text),
+        text: slicedText,
         ...prismaMessage,
       },
       threadId: threadId,
@@ -174,7 +178,7 @@ export const groupMessageListener = async (interaction: Interaction) => {
   await bluesky.comment(
     thread.uri,
     thread.cid,
-    sliceText(text)
+    slicedText
   );
 };
 
