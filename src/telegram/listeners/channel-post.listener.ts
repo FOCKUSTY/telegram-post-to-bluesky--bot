@@ -246,9 +246,10 @@ export const channelPostListener = async (interaction: Interaction) => {
     return;
   }
 
-  // new BlueskyApi().post({
-  // text: data.text,
-  // images: data.attachments
+  const api = await BlueskyApi.createInstance(prismaChannel.blueskyId, prismaChannel.blueskyPassword);
+  // api.post({
+    // images: data.attachments,
+    // text: data.text,
   // });
 };
 

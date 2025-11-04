@@ -1,8 +1,8 @@
 import type { Image } from "../telegram/listeners/channel-post.listener";
 import type { Main } from "@atproto/api/dist/client/types/app/bsky/embed/images";
 
-import { RichText } from "@atproto/api";
-import agent from "./bluesky.agent";
+import { RichText, AtpAgent } from "@atproto/api";
+import agent, { loginByUsername } from "./bluesky.agent";
 
 function convertDataURIToUint8Array(dataURI: string): Uint8Array {
   const base64 = dataURI.split(",")[1];
@@ -40,6 +40,12 @@ async function getImages(attachments?: Image[]): Promise<Main["images"]> {
 export class Bluesky {
   public readonly maxTextLength: number = 300;
 
+  public static login = loginByUsername;
+  public static createInstance = (username: string, password: string) =>
+    loginByUsername(username, password).then(() => new Bluesky());
+
+  public constructor(public readonly agent: AtpAgent = agent) {}
+
   public async post({
     text,
     images
@@ -49,9 +55,9 @@ export class Bluesky {
   }): Promise<unknown> {
     const richText = new RichText({ text });
 
-    await richText.detectFacets(agent);
+    await richText.detectFacets(this.agent);
 
-    return agent.post({
+    return this.agent.post({
       text: richText.text,
       facets: richText.facets,
       embed: {
@@ -60,14 +66,6 @@ export class Bluesky {
       },
       createdAt: new Date().toISOString()
     });
-  }
-
-  public put(): Promise<unknown> {
-    throw new Error("PUT method is not possible");
-  }
-
-  public delete({ id }: { id: string }): Promise<unknown> {
-    throw new Error(JSON.stringify({ id }));
   }
 }
 

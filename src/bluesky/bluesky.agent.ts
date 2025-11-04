@@ -20,7 +20,7 @@ export const login = async () => {
   return data;
 };
 
-export const loginByUsername= async (username: string, password: string) => {
+export const loginByUsername = async (username: string, password: string) => {
   const agent = new AtpAgent({
     service: "https://bsky.social"
   });
