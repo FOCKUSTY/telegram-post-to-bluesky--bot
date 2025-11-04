@@ -11,7 +11,7 @@ datasource db {
 model Channel {
   id              String   @id
   url             String?
-  userId          String    
+  userId          String
   blueskyId       String
   blueskyPassword String
   commentsEnabled Boolean  @default(true)
@@ -21,8 +21,17 @@ model Channel {
 }
 
 model Thread {
-  id String   @id
-  createdAt  DateTime @default(now())
-  channelId  String
-  channel    Channel  @relation(fields: [channelId], references: [id])
+  id        String    @id
+  uri String
+  cid String
+  threadId  String?   @unique
+  channelId String
+  channel   Channel   @relation(fields: [channelId], references: [id])
+  createdAt DateTime  @default(now())
+}
+
+model Message {
+  id  String @id
+  uri String
+  cid String
 }

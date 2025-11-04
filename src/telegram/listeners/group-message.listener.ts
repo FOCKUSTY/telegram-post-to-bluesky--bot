@@ -27,6 +27,20 @@ export const groupMessageListener = async (interaction: Interaction) => {
   const message = interaction.update.message;
   const channelId = `${reply?.forward_from_chat?.id}`;
   const threadId = `${reply.chat.id}-${message.message_thread_id}`;
+  const messageId = `${reply.chat.id}-${reply.message_id}`;
+
+  let prismaMessage = await prisma.message.findUnique({
+    where: { id: messageId }
+  });
+
+  if (!prismaMessage) {
+    prismaMessage = await prisma.message.create({
+      data: {
+        id: messageId,
+        threadId: threadId,
+      }
+    });
+  }
 
   if (reply?.forward_origin?.type === "channel") {
     const prismaChannel = await prisma.channel.findUnique({
@@ -45,29 +59,22 @@ export const groupMessageListener = async (interaction: Interaction) => {
       return;
     }
 
-    let thread = await prisma.thread.findUnique({
-      where: { id: threadId }
+    const thread = await prisma.thread.findUnique({
+      where: { threadId }
     });
 
     if (!thread) {
-      thread = await prisma.thread.create({
-        data: {
-          id: threadId,
-          channelId: channelId
-        }
-      });
+      return;
     }
   }
 
   const thread = await prisma.thread.findUnique({
-    where: { id: threadId }
+    where: { threadId }
   });
 
   if (!thread) {
     return;
   }
-
-  console.log(reply.text);
   
   return;
 };

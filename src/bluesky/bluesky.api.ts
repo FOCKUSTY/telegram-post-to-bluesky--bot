@@ -59,7 +59,7 @@ export class Bluesky {
   }: {
     text: string;
     images?: Image[];
-  }): Promise<unknown> {
+  }) {
     const richText = new RichText({ text });
 
     await richText.detectFacets(this.agent);
@@ -74,6 +74,29 @@ export class Bluesky {
       createdAt: new Date().toISOString()
     });
   }
+
+  public async comment(uri: string, cid: string, text: string) {
+    try {
+      const response = await this.agent.post({
+        text: text,
+        reply: {
+          parent: {
+            uri: uri,
+            cid: cid
+          },
+          root: {
+            uri: uri,
+            cid: cid
+          }
+        },
+        createdAt: new Date().toISOString()
+      });
+      return response;
+    } catch (error) {
+      console.error('Failed to add comment:', error);
+      throw error;
+    }
+  };
 }
 
 export default Bluesky;

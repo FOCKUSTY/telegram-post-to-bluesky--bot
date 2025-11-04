@@ -105,6 +105,7 @@ const attachments = new Map<
     resolve: () => unknown;
     images: Image[];
     text: string;
+    ids: string[];
   }
 >();
 export const resolveManygetAttacments = (
@@ -117,6 +118,7 @@ export const resolveManygetAttacments = (
     text: string;
     skip?: boolean;
     end?: boolean;
+    ids: string[];
   }>((resolve) => {
     (async () => {
       const attachment = await getAttacment(interaction, channel);
@@ -124,11 +126,11 @@ export const resolveManygetAttacments = (
       const chatId = interaction.update.channel_post.chat.id;
       
       if (!attachment) {
-        return resolve({ attachments: [], text: "", end: true });
+        return resolve({ attachments: [], text: "", end: true, ids: [ interaction.update.channel_post.message_id ] });
       }
       
       if (!groupId) {
-        return resolve({ attachments: [attachment], text: "", end: true });
+        return resolve({ attachments: [attachment], text: "", end: true, ids: [interaction.update.channel_post.message_id ] });
       }
 
       const id = `${chatId}-${groupId}`;
@@ -138,12 +140,14 @@ export const resolveManygetAttacments = (
       data?.resolve();
 
       const images = [...(data?.images || []), attachment];
+      const ids = [ ...(data?.ids||[]), interaction.update.channel_post.message_id ];
       const timeout = setTimeout(() => {
         resolve({
           attachments: images,
           end: true,
           text: data?.text || "",
-          skip: false
+          skip: false,
+          ids: ids
         });
       }, 5000);
 
@@ -151,12 +155,14 @@ export const resolveManygetAttacments = (
         text: data?.text || text || "",
         images,
         timeout,
+        ids: ids,
         resolve: () => {
           resolve({
             attachments: images,
             skip: true,
             text: data?.text || "",
-            end: false
+            end: false,
+            ids: ids
           });
         }
       });
@@ -269,10 +275,18 @@ export const channelPostListener = async (interaction: Interaction) => {
     return;
   }
 
-  return api.post({
-    images: data.attachments,
-    text: message,
-  });
+  // const postData = await api.post({
+    // images: data.attachments,
+    // text: message,
+  // });
+// 
+  // prisma.thread.create({
+    // data: {
+      // id: id,
+      // channelId: prismaChannel.id,
+      // postUrl: postData.uri,
+    // }
+  // });
 };
 
 export default channelPostListener;
