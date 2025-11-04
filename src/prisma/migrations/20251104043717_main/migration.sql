@@ -2,10 +2,12 @@
 CREATE TABLE "Channel" (
     "id" TEXT NOT NULL,
     "url" TEXT,
+    "userId" TEXT NOT NULL,
     "blueskyId" TEXT NOT NULL,
     "blueskyPassword" TEXT NOT NULL,
     "commentsEnabled" BOOLEAN NOT NULL DEFAULT true,
     "enabled" BOOLEAN NOT NULL DEFAULT true,
+    "verified" BOOLEAN NOT NULL DEFAULT false,
 
     CONSTRAINT "Channel_pkey" PRIMARY KEY ("id")
 );
@@ -19,12 +21,6 @@ CREATE TABLE "Thread" (
 
     CONSTRAINT "Thread_pkey" PRIMARY KEY ("id")
 );
-
--- CreateIndex
-CREATE UNIQUE INDEX "Channel_url_key" ON "Channel"("url");
-
--- CreateIndex
-CREATE UNIQUE INDEX "Channel_blueskyId_key" ON "Channel"("blueskyId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Thread_telegramId_key" ON "Thread"("telegramId");

@@ -10,11 +10,13 @@ datasource db {
 
 model Channel {
   id              String   @id
-  url             String?  @unique
-  blueskyId       String   @unique
+  url             String?
+  userId          String    
+  blueskyId       String
   blueskyPassword String
   commentsEnabled Boolean  @default(true)
   enabled         Boolean  @default(true)
+  verified        Boolean  @default(false)
   threads         Thread[]
 }
 
@@ -22,6 +24,6 @@ model Thread {
   id         Int      @id @default(autoincrement())
   telegramId String   @unique
   createdAt  DateTime @default(now())
-  channel    Channel? @relation(fields: [channelId], references: [id])
   channelId  String?
+  channel    Channel? @relation(fields: [channelId], references: [id])
 }

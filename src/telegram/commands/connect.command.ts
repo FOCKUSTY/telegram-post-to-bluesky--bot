@@ -1,5 +1,6 @@
 import prisma from "@database";
 import { Interaction } from "../interaction.type";
+import { loginByUsername } from "src/bluesky";
 
 const TEXT = `
 Команда /connect позволяет связать ваш аккаунт Telegram с аккаунтом Bluesky.
@@ -45,26 +46,43 @@ export const connectCommand = async (interaction: Interaction) => {
     return interaction.reply(TEXT);
   }
 
+  const finded = await prisma.channel.findUnique({
+    where: {
+      id: telegramId,
+    },
+  });
+
+  if (finded) {
+    return interaction.reply("Этот канал уже подключен.");
+  }
+
+  const { data, agent } = await loginByUsername(blueskyUsername, blueskyPassword);
+
+  if (!data.success) {
+    return interaction.reply("Не удалось войти в Bluesky. Проверьте правильность имени пользователя и пароля.");
+  }
+
+  if (!agent.did) {
+    return interaction.reply("Не удалось получить идентификатор пользователя Bluesky.");
+  }
+  
   const prismaChannel = await prisma.channel.create({
     data: {
       id: telegramId,
       url: telegramUrl === "null" ? null : telegramUrl,
-      blueskyId: blueskyUsername,
+      userId: `${interaction.message.from.id}`,
+      blueskyId: agent.did,
       blueskyPassword: blueskyPassword,
-      enabled: enabled ? enabled === "true" : true,
-      commentsEnabled: commentsEnabled ? commentsEnabled === "true" : true,
+      enabled: Boolean(enabled) || true,
+      commentsEnabled: Boolean(commentsEnabled) || true,
     },
   });
-
-  /*
-    НЕ ЗАБЫТЬ ДОБАВИТЬ ВАЛИДАЦИЮ ПАРОЛЯ И СУЩЕСТВОВАНИЯ АККАУНТА BLUESKY
-  */
 
   if (!prismaChannel) {
     return interaction.reply("Не удалось подключить канал. Попробуйте еще раз.");
   }
 
-  return interaction.reply("Канал успешно подключен к Bluesky!");
+  return interaction.reply("Канал успешно подключен.");
 };
 
 export default connectCommand;

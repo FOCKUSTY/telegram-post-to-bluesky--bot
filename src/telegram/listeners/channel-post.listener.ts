@@ -141,14 +141,88 @@ export const resolveManygetAttacments = (
   });
 };
 
+export const verifyAndUpdateOrDeleteChannel = async ({
+  interaction,
+  channel
+}: {
+  interaction: Interaction,
+  channel: {
+    id: string;
+    userId: string;
+    url: string | null;
+    blueskyId: string;
+    blueskyPassword: string;
+    commentsEnabled: boolean;
+    enabled: boolean;
+    verified: boolean;
+  }
+}) => {
+  const chat = interaction.update.channel_post.chat;
+  const administrators = await interaction.getChatAdministrators();
+  const available = administrators.some((admin) => admin.status === "creator" && `${admin.user.id}` === channel.userId);
+
+  if (!available) {
+    prisma.channel.delete({
+      where: {
+        id: channel.id
+      }
+    });
+    
+    interaction.telegram.sendMessage(
+      channel.userId,
+      `Канал ${chat.title} был отключен, так как бот не смог подтвердить ваши права создателя в этом канале. Пожалуйста, обратитесь к создателю канала для подключения бота.`
+    );
+
+    return false;
+  }
+
+  console.log("Channel verified:", chat.id);
+
+  await prisma.channel.update({
+    where: {
+      id: channel.id
+    },
+    data: {
+      verified: true
+    }
+  });
+
+  console.log("Channel updated as verified:", chat.id);
+
+  return true;
+}
+
 export const getPrismaChannel = async (interaction: Interaction) => {
   const chat = interaction.update.channel_post.chat;
-
-  return prisma.channel.findUnique({
+  const channel = await prisma.channel.findUnique({
     where: {
       id: `${chat.id}`
     }
   });
+
+  console.log("Validating channel:", chat.id);
+  if (!channel) {
+    console.log("Channel not found:", chat.id);
+    return null;
+  }
+
+  if (!channel.enabled) {
+    console.log("Chat is disabled:", chat.id);
+    return null;
+  }
+
+  if (channel.verified) {
+    console.log("Channel validated:", chat.id);
+    return channel;
+  }
+
+  const verified = await verifyAndUpdateOrDeleteChannel({ interaction, channel });
+  if (!verified) {
+    console.log("Channel is not verified:", chat.id);
+    return null;
+  }
+
+  return channel;
 };
 
 export const channelPostListener = async (interaction: Interaction) => {
