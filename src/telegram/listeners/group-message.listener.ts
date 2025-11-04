@@ -75,7 +75,7 @@ const comment = async ({
 
   const id = channelId || thread?.channelId;
   if (!id) {
-    return;
+    return console.log("Channel ID not found for thread:", threadId);
   }
 
   const bluesky = await findChannelAndCreateBlueskyInstance(id);
@@ -86,7 +86,7 @@ const comment = async ({
   const uri = message?.uri || thread?.uri;
   const cid = message?.cid || thread?.cid;
   if (!uri || !cid) {
-    return;
+    return console.log("URI or CID not found for thread:", threadId);
   }
 
   await createOrUpdateThread({
@@ -153,7 +153,7 @@ export const groupMessageListener = async (interaction: Interaction) => {
 
   const { thread } = await findThenCreateOrUpdateThread(threadId);
   if (!thread) {
-    return;
+    return console.log("Thread not found:", threadId);
   }
 
   const prismaChannel = await prisma.channel.findUnique({
@@ -161,18 +161,18 @@ export const groupMessageListener = async (interaction: Interaction) => {
   });
 
   if (!prismaChannel) {
-    return;
+    return console.log("Channel not found:", channelIdAvailable ? channelId : thread.channelId);
   }
   if (!prismaChannel.commentsEnabled) {
-    return;
+    return console.log("Comments not enabled for channel:", prismaChannel.id);
   }
   if (!prismaChannel.enabled) {
-    return;
+    return console.log("Channel not enabled:", prismaChannel.id);
   }
 
   const bluesky = await createBlueskyInstance(prismaChannel);
   if (!bluesky) {
-    return;
+    return console.log("Bluesky instance could not be created for channel:", prismaChannel.id);
   }
 
   await bluesky.comment(
