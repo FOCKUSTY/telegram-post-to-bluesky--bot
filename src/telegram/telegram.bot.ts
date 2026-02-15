@@ -24,6 +24,7 @@ client.on("message", async (interaction) => {
 });
 
 client.on("channel_post", async (interaction) => {
+  console.log("POST");
   if (!isInteractionValided(interaction.update.channel_post.date)) {
     return;
   }
@@ -32,7 +33,9 @@ client.on("channel_post", async (interaction) => {
 });
 
 export const login = async () => {
-  await client.launch();
+  await client.launch(() => {
+    console.log("Loggined as:", client.botInfo?.username);
+  });
 };
 
 export default client;

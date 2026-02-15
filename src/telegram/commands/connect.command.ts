@@ -73,8 +73,8 @@ export const connectCommand = async (interaction: Interaction) => {
       userId: `${interaction.message.from.id}`,
       blueskyId: agent.did,
       blueskyPassword: blueskyPassword,
-      enabled: Boolean(enabled) || true,
-      commentsEnabled: Boolean(commentsEnabled) || true,
+      enabled: (enabled === "true"||enabled === "false") ? Boolean(enabled) : true,
+      commentsEnabled: (enabled === "true"||enabled === "false") ? Boolean(enabled) : false,
     },
   });
 

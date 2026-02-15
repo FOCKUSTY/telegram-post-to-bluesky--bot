@@ -1,4 +1,5 @@
 const REQUIRED_ENV_KEYS = [
+  "DATABASE_URL",
   "TELEGRAM_BOT_TOKEN",
   "TIME_TO_LIVE"
 ] as const;
